@@ -1,56 +1,94 @@
-#
-# Class diary  
-#
-# Create program for handling lesson scores.
-# Use python to handle student (highscool) class scores, and attendance.
-# Make it possible to:
-# - Get students total average score (average across classes)
-# - get students average score in class
-# - hold students name and surname
-# - Count total attendance of student
-# The default interface for interaction should be python interpreter.
-# Please, use your imagination and create more functionalities. 
-# Your project should be able to handle entire school.
-# If you have enough courage and time, try storing (reading/writing) 
-# data in text files (YAML, JSON).
-# If you have even more courage, try implementing user interface.
+import argparse
+import json
 
-class School(object):
-    subjects = [history, biology, math, english, geography]
-    students_list = []
 
-class Class(object):
-    def get_average_in_class(self, students_class, subject):
-        number_of_students = sum(student for School.student_list if student.student_class == 'students_class')
+class StudentNotExist(Exception):
+    pass
 
-class Student(object):
-    def __init__(self, name, surname, student_class):
-        self.name = name
-        self.surname = surname
-        self.student_class = student_class
-        self.scores = {subject: [], for subject in School.subjects}
-        self.attendance = {subject: [] for subject in School.subjects}
-        School.students.append(self)
 
-    def get_attendance_at_subject(self, subject):
-        return "Attendance at {}: {}/{}".fomat(subject, self.attendance[subject].count('y'), len(self.attendance[subject]))
+class Diary(object):
+    def __init__(self, students_list=None):
+        self._students_list = []
+        if students_list is not None:
+            self._students_list = students_list
 
-    def get_total_attendance(self):
-        pass
+    def get_student(self, student_name):
+        for student in self._students_list:
+            if student['name'] == student_name:
+                return student
+        raise StudentNotExist('No such student: {}'.format(student_name))
 
-    def add_score(self, score, subject):
-        self.scores[subject].append(score)
+    def add_student(self, student):
+        self._students_list.append(student)
 
-    def get_scores_from_subject(self, subject):
-        return self.scores[subject]
+    def get_average_score_of_a_student(self, student_name):
+        student = self.get_student(student_name)
+        average = {}
+        for subject, subject_data in student['subjects'].iteritems():
+            average[subject] = float(sum(subject_data['scores'])) / len(subject_data['scores'])
+        return average
+        
+    def get_average_score_of_a_class(self, class_):
+        scores = []
+        for student in self._students_list:
+            if student['class'] == class_:
+                for subject_data in student['subjects'].itervalues():
+                    scores.extend(subject_data['scores'])
+        return float(sum(scores))/len(scores)
+        
+    def get_average_score_of_a_school(self):
+        scores = []
+        for student in self._students_list:
+            for subject_data in student['subjects'].itervalues():
+                scores.extend(subject_data['scores'])
+        return float(sum(scores))/len(scores)
 
-    def get_all_scores(self):
-        return self.scores
+    def get_total_attendance_of_a_student(self, student_name):
+        student = self.get_student(student_name)
+        return sum([subject_data['attendances']
+                   for subject_data in student['subjects'].itervalues()])
+                   
+    def get_total_attendance_of_a_class(self, class_):
+        return sum([self.get_total_attendance_of_a_student(student['name'])
+                   for student in self._students_list
+                       if student['class'] == class_])
+                       
+    def get_total_attendance_of_a_school(self):
+        return sum([self.get_total_attendance_of_a_student(student['name'])
+                   for student in self._students_list])
 
-    def add_atendance(self, subject, is_present):
-        self.attendance[subject].append(is_present)
+    def export_to_json(self):
+        return json.dumps(self._students_list)
+
 
 if __name__ == '__main__':
-    student1 = Student('Jan', 'Kowalski', 1)
-    student2 = Student('Adam', 'Nowak', 1)
-    student3 = Student('Anna', 'Kowalska', 2)
+    parser = argparse.ArgumentParser('Diary program')
+    parser.add_argument('-i', '--input', dest='input', default='',
+                        help='Input file with students')
+    parser.add_argument('-o', '--output', dest='output', default='',
+                        help='Output file to store data')
+    args = parser.parse_args()
+    if args.input:
+        file = open(args.input)
+        diary = Diary(json.loads(file.read()))
+        file.close()
+    else:
+        diary = Diary()
+
+    requested_students = ['Asterix Gal', 'Jan Sebastian Bach', 'Panoramix']
+    for student in requested_students:
+        try:
+            print diary.get_total_attendance_of_a_student(student)
+            print diary.get_average_score_of_a_student(student)
+        except StudentNotExist as e:
+            print e.message
+    print diary.get_average_score_of_a_class(1)
+    print diary.get_average_score_of_a_school()
+    print diary.get_total_attendance_of_a_class(1)
+    print diary.get_total_attendance_of_a_school()
+
+    if args.output:
+        file = open(args.output, 'w')
+        file.write(diary.export_to_json())
+        file.close()
+

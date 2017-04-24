@@ -1,0 +1,26 @@
+[
+{"name": "Jan Andrzej Morsztyn",
+ "class": 1,
+ "subjects": 
+    {
+        "physics": {"attendances": 7, "scores": [4, 2, 3]},
+        "math": {"attendances": 5, "scores": [4, 2, 5, 3]}
+    }
+},
+{"name": "Jan Sebastian Bach",
+ "class": 1,
+ "subjects": 
+    {
+        "physics": {"attendances": 4, "scores": [4, 3]},
+        "math": {"attendances": 3, "scores": [4]}
+    }
+},
+{"name": "Asterix Gal",
+ "class": 2,
+ "subjects":
+    {
+        "physics": {"attendances": 9, "scores": [4, 2, 3, 5, 5, 4]},
+        "math": {"attendances": 6, "scores": [4, 5, 3, 4]}
+    }
+}
+]
